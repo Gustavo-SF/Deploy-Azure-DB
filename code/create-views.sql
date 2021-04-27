@@ -1,3 +1,6 @@
+SET DATEFORMAT dmy;  
+GO 
+
 -- View for MB52 in Power BI
 
 DROP VIEW IF EXISTS PPP.MB52view;
@@ -15,12 +18,18 @@ SELECT
     b.InTransit, 
     b.InTransitValue * u.ExchangeRate as InTransitValueEuro, 
     m.MRPPriority, 
-    ISNULL(MAX(p.EntryDate), '01/01/2018') as LastIssue
+    CASE
+        WHEN ISNULL(MAX(p.EntryDate), DATEFROMPARTS(2018,1,1)) < ISNULL(i.InitialEntry, DATEFROMPARTS(2018,1,1)) 
+        THEN ISNULL(i.InitialEntry, DATEFROMPARTS(2018,1,1))
+        ELSE ISNULL(MAX(p.EntryDate), DATEFROMPARTS(2018,1,1))
+    END as LastIssue
 FROM PPP.MB52 as b 
-LEFT JOIN (SELECT q.PlantID, q.WarehouseID, t.ExchangeRate
-FROM PPP.Locations as q 
-INNER JOIN PPP.ZFI as t 
-ON q.Currency=t.FromCurrency) as u 
+LEFT JOIN (
+	SELECT q.PlantID, q.WarehouseID, t.ExchangeRate
+	FROM PPP.Locations as q 
+	INNER JOIN PPP.ZFI as t 
+	ON q.Currency=t.FromCurrency
+) as u 
 ON b.Plant=u.PlantID AND b.Warehouse=u.WarehouseID
 LEFT JOIN PPP.MRP as m
 ON b.Warehouse=m.Warehouse AND b.Material=m.Material
@@ -37,9 +46,39 @@ LEFT JOIN (
         MovementType='Z21' OR 
         MovementType='Z22' OR 
         MovementType='Z31' OR 
-        MovementType='Z32'
+        MovementType='Z32' OR
+        MovementType='Z61' OR
+        MovementType='Z62'
 ) as p 
 ON b.Material=p.Material AND b.Warehouse=p.Warehouse
+LEFT JOIN (
+    SELECT a.Warehouse, a.Material, MAX(a.EntryDate) as InitialEntry
+    FROM (
+		SELECT
+			b.Warehouse,
+			b.Material,
+			ISNULL(a.MovementType,'Current') as MovementType,
+			ISNULL(a.EntryDate, GETDATE()) as EntryDate,
+			b.Unrestricted -  ISNULL(a.CumQuantity,0) as UnrestrictedHistory
+		FROM (
+			SELECT Warehouse, Material, MovementType, EntryDate,
+			SUM(Quantity) OVER (PARTITION BY Warehouse, Material ORDER BY EntryDate DESC ROWS UNBOUNDED PRECEDING) AS CumQuantity
+			FROM PPP.MB51
+			WHERE MovementType<>'561' AND
+			MovementType<>'565' AND
+			MovementType<>'562' AND
+			MovementType<>'999' AND
+			MovementType<>'998' AND
+			MovementType<>'952' AND
+			MovementType<>'951'
+		) as a
+		RIGHT JOIN [PPP].[MB52] as b
+		ON a.Material=b.Material AND a.Warehouse=b.Warehouse
+	) as a
+	WHERE UnrestrictedHistory <= 0
+	GROUP BY Warehouse,Material
+) as i 
+ON b.Material=i.Material AND b.Warehouse=i.Warehouse
 GROUP BY 
     b.Plant, 
     b.Warehouse, 
@@ -52,7 +91,8 @@ GROUP BY
     b.InTransit, 
     b.InTransitValue, 
     u.ExchangeRate, 
-    m.MRPPriority;
+    m.MRPPriority,
+	i.InitialEntry;
 GO
 
 -- View for ZMB25 in Power BI
