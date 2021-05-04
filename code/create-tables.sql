@@ -1,7 +1,7 @@
 IF SCHEMA_ID("PPP") IS NULL
 EXEC ("CREATE SCHEMA PPP");
 
-
+-- stock
 DROP TABLE IF EXISTS PPP.MB52;
 CREATE TABLE PPP.MB52
 (
@@ -18,6 +18,7 @@ CREATE TABLE PPP.MB52
     PRIMARY KEY (Plant, Warehouse, Material)
 );
 
+-- stock movements
 DROP TABLE IF EXISTS PPP.MB51;
 CREATE TABLE PPP.MB51
 (
@@ -27,13 +28,13 @@ CREATE TABLE PPP.MB51
     Material VARCHAR(20) NOT NULL,
     Quantity DECIMAL,
     MovementType CHAR(3),
-    UserName VARCHAR(20),
     EntryDate DATE,
     RequisitionDate DATE,
     MovementValue DECIMAL NOT NULL,
     ReservationID VARCHAR(15)
 );
 
+-- stock history
 DROP TABLE IF EXISTS PPP.MCBA;
 CREATE TABLE PPP.MCBA
 (
@@ -51,6 +52,7 @@ CREATE TABLE PPP.MCBA
     PRIMARY KEY (Plant, Material, Warehouse, Month_)
 );
 
+-- Material Requirements Planning
 DROP TABLE IF EXISTS PPP.MRP;
 CREATE TABLE PPP.MRP
 (
@@ -63,6 +65,7 @@ CREATE TABLE PPP.MRP
     PRIMARY KEY (Warehouse, Material)
 );
 
+-- conversion rates
 DROP TABLE IF EXISTS PPP.ZFI;
 CREATE TABLE PPP.ZFI
 (
@@ -73,6 +76,7 @@ CREATE TABLE PPP.ZFI
     PRIMARY KEY (FromCurrency, ToCurrency, ValidDate)
 );
 
+-- reservations
 DROP TABLE IF EXISTS PPP.ZMB25;
 CREATE TABLE PPP.ZMB25
 (
@@ -86,7 +90,6 @@ CREATE TABLE PPP.ZMB25
     PurchaseRequisition VARCHAR(15),
     MaintenanceOrder VARCHAR(15),
     DestinationCC VARCHAR(10),
-    UserName VARCHAR(40),
     MovementType CHAR(3),
     Deleted BIT,
     FinalIssue BIT,
@@ -96,6 +99,7 @@ CREATE TABLE PPP.ZMB25
     PRIMARY KEY (ReservationID, ReservationItemID)
 );
 
+-- materials
 DROP TABLE IF EXISTS PPP.ZMM001;
 CREATE TABLE PPP.ZMM001
 (
@@ -107,27 +111,4 @@ CREATE TABLE PPP.ZMM001
     MaterialType CHAR(4) NOT NULL,
     Created DATE NOT NULL,
     LastChange Date NOT NULL
-);
-
-IF EXISTS(SELECT * FROM sys.external_data_sources WHERE name = 'dataready') 
-DROP EXTERNAL DATA SOURCE dataready;
-
-IF EXISTS(SELECT * FROM sys.database_scoped_credentials WHERE name = 'AccessCredential') 
-DROP DATABASE SCOPED CREDENTIAL AccessCredential;
-
-IF (SELECT COUNT(*) FROM sys.symmetric_keys WHERE name LIKE '%DatabaseMasterKey%') = 0 
-BEGIN
-CREATE MASTER KEY
-ENCRYPTION BY PASSWORD='MASTERKEYPWD000!'
-END;
-
-CREATE DATABASE SCOPED CREDENTIAL AccessCredential
-WITH IDENTITY = 'SHARED ACCESS SIGNATURE',
-SECRET = 'SASCODE';
-
-CREATE EXTERNAL DATA SOURCE dataready
-WITH (
-    TYPE = BLOB_STORAGE,
-    LOCATION = 'https://STORAGEACCOUNT.blob.core.windows.net/data-ready',
-    CREDENTIAL = AccessCredential
 );

@@ -1,5 +1,11 @@
--- View for MB52 in Power BI
+/*
+View for MB52 in Power BI
 
+- Concatenates Plant with Warehouse code in LocationID
+- Joins ZFI and multiplies the respective exchange rate by the local values to get Euro values
+- Joins MRP to identity MRP materials
+- Joins MB51 to identify the last movement (with group by) of the material in stock.
+*/
 DROP VIEW IF EXISTS PPP.MB52view;
 GO
 CREATE VIEW PPP.MB52view
@@ -28,16 +34,13 @@ LEFT JOIN (
     SELECT Warehouse, Material, EntryDate
     FROM PPP.MB51
     WHERE 
-        MovementType='201' OR 
-        MovementType='202' OR 
-        MovementType='261' OR 
-        MovementType='262' OR 
-        MovementType='601' OR 
-        MovementType='602' OR 
-        MovementType='Z21' OR 
-        MovementType='Z22' OR 
-        MovementType='Z31' OR 
-        MovementType='Z32'
+        MovementType<>'561' AND 
+        MovementType<>'562' AND 
+        MovementType<>'565' AND 
+        MovementType<>'951' AND 
+        MovementType<>'952' AND 
+        MovementType<>'998' AND 
+        MovementType<>'999'
 ) as p 
 ON b.Material=p.Material AND b.Warehouse=p.Warehouse
 GROUP BY 
@@ -55,7 +58,14 @@ GROUP BY
     m.MRPPriority;
 GO
 
--- View for ZMB25 in Power BI
+/*
+View for ZMB25 in Power BI
+
+- Concatenates Plant with Warehouse code in LocationID
+- Joins MB52 to get the current available stock
+- Also sums cumulatively the remaining quantity for each plant, warehouse and material and subtracts that to the available unrestricted.
+This is to understand how many reservations it is possible to satisfy with the available stock. 
+*/
 DROP VIEW IF EXISTS [PPP].[ZMB25view];
 GO
 CREATE VIEW [PPP].[ZMB25view]
@@ -73,7 +83,8 @@ SELECT
     b.FinalIssue, 
     b.CreationDate, 
     m.MRPPriority, 
-    ISNULL(p.Unrestricted, 0) as AvailableStock
+    ISNULL(p.Unrestricted, 0) - (SUM(b.RemainingQuantity) OVER (PARTITION BY b.Plant, b.Warehouse, b.Material ORDER BY b.RemainingQuantity ASC ROWS UNBOUNDED PRECEDING)) AS ProjectedStockAfter,
+    ISNULL(p.Unrestricted, 0) AS AvailableStock
 FROM  [PPP].[ZMB25] as b
 LEFT JOIN [PPP].[MRP] as m
 ON b.Warehouse=m.Warehouse AND b.Material=m.Material
@@ -81,8 +92,13 @@ LEFT JOIN [PPP].[MB52] as p
 ON b.Plant=p.Plant AND b.Warehouse=p.Warehouse AND b.Material=p.Material;
 GO
 
--- View for MB51 in Power BI
+/*
+View for MB51 in Power BI
 
+- Concatenates Plant with Warehouse code in LocationID
+- Joins ZFI and multiplies the respective exchange rate by the local values to get Euro values
+- Joins MRP to identity MRP materials
+*/
 DROP VIEW IF EXISTS [PPP].[MB51view];
 GO
 CREATE VIEW [PPP].[MB51view]
@@ -92,7 +108,6 @@ SELECT
     b.Material,
     b.Quantity,
     b.MovementType,
-    b.UserName,
     b.EntryDate,
     b.RequisitionDate,
     b.MovementValue * u.ExchangeRate as MovementValueEuro,
@@ -110,8 +125,12 @@ LEFT JOIN [PPP].[MRP] as m
 ON b.Warehouse=m.Warehouse AND b.Material=m.Material;
 GO
 
--- View for ZMM001 in PowerBI
+/*
+View for ZMM001 in PowerBI
 
+- Concatenates Material and MaterialDescription
+- Concatenates MaterialGroup and MaterialGroupDescription
+*/
 DROP VIEW IF EXISTS [PPP].[ZMM001view];
 GO
 CREATE VIEW [PPP].[ZMM001view]
@@ -125,8 +144,12 @@ SELECT
 FROM [PPP].[ZMM001];
 GO
 
--- View for MCBA in Power BI
+/*
+View for MCBA in Power BI
 
+- Concatenates Plant with Warehouse code in LocationID
+- Joins ZFI and multiplies the respective exchange rate by the local values to get Euro values
+*/
 DROP VIEW IF EXISTS [PPP].[MCBAview];
 GO
 CREATE VIEW [PPP].[MCBAview]
@@ -150,8 +173,12 @@ LEFT JOIN (
 ON b.Plant=u.PlantID AND b.Warehouse=u.WarehouseID;
 GO
 
--- View for MRP in Power BI
+/*
+View for MRP in Power BI
 
+- Concatenates Plant with Warehouse code in LocationID
+To get the Plant name we get it from the Locations data table.
+*/
 DROP VIEW IF EXISTS [PPP].[MRPview];
 GO
 CREATE VIEW [PPP].[MRPview]
@@ -169,8 +196,13 @@ LEFT JOIN (
 ON b.Warehouse=u.WarehouseID;
 GO
 
--- View for Locations in PowerBI
+/*
+View for Locations in PowerBI
 
+- Concatenates Plant with Warehouse code in LocationID
+- Concatenates Plant and PlantName
+- Concatenates WarehouseID and WarehouseName
+*/
 DROP VIEW IF EXISTS [PPP].[LocationsView];
 GO
 CREATE VIEW [PPP].[LocationsView]
@@ -184,8 +216,11 @@ SELECT
 FROM [PPP].[Locations];
 GO
 
--- View to get missing materials from ZMM001
+/*
+View to get missing materials from ZMM001
 
+- Checks all the materials that are not present in the ZMM001 table and concatenates vertically.
+*/
 DROP VIEW IF EXISTS PPP.MissingMaterials;
 GO
 CREATE VIEW PPP.MissingMaterials
