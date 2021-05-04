@@ -46,7 +46,7 @@ sas=$(az storage account generate-sas --permissions cdlruwap --account-name $sto
 newsas=$(echo $sas | sed 's/&/\\\&/g;s/\//\\\//g')
 
 # set up credentials for accessing external source
-tempfile=$(sed "s/SASCODE/${newsas}/; s/STORAGEACCOUNT/${storageAccount}/" code/configuration.sql)
+tempfile=$(sed "s/SASCODE/${newsas}/; s/STORAGEACCOUNT/${storageAccount}/; s/MASTER_PW/${DATABASE_MASTER_PW}/" code/configuration.sql)
 sqlcmd \
     -S tcp:$server.database.windows.net \
     -d $database \
