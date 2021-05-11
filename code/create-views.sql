@@ -82,6 +82,8 @@ SELECT
     b.Deleted, 
     b.FinalIssue, 
     b.CreationDate, 
+    b.DeliveryDate,
+    b.RequiredDate,
     m.MRPPriority, 
     ISNULL(p.Unrestricted, 0) - (SUM(b.RemainingQuantity) OVER (PARTITION BY b.Plant, b.Warehouse, b.Material ORDER BY b.RemainingQuantity ASC ROWS UNBOUNDED PRECEDING)) AS ProjectedStockAfter,
     ISNULL(p.Unrestricted, 0) AS AvailableStock
