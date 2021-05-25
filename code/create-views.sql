@@ -193,7 +193,7 @@ FROM PPP.MRP as b
 LEFT JOIN (
     SELECT *
     FROM PPP.Locations
-    WHERE WarehouseID <> 'TRFR'
+    WHERE WarehouseID <> 'USTK'
 ) as u
 ON b.Warehouse=u.WarehouseID;
 GO

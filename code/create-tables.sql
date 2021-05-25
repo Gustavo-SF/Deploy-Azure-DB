@@ -6,7 +6,7 @@ DROP TABLE IF EXISTS PPP.MB52;
 CREATE TABLE PPP.MB52
 (
     Plant    CHAR(4) NOT NULL,
-    Warehouse    CHAR(4) DEFAULT 'TRFR',
+    Warehouse    CHAR(4) DEFAULT 'USTK',
     Material    VARCHAR(20) NOT NULL,
     Unrestricted    DECIMAL,
     UnrestrictedValue   DECIMAL,
@@ -24,7 +24,7 @@ CREATE TABLE PPP.MB51
 (
     MovementId INTEGER IDENTITY(1,1) NOT NULL PRIMARY KEY,
     Plant CHAR(4) NOT NULL,
-    Warehouse CHAR(4) DEFAULT 'TRFR',
+    Warehouse CHAR(4) DEFAULT 'USTK',
     Material VARCHAR(20) NOT NULL,
     Quantity DECIMAL,
     MovementType CHAR(3),
@@ -40,7 +40,7 @@ CREATE TABLE PPP.MCBA
 (
     Plant CHAR(4) NOT NULL,
     Material VARCHAR(20) NOT NULL,
-    Warehouse CHAR(4) DEFAULT 'TRFR',
+    Warehouse CHAR(4) DEFAULT 'USTK',
     MRPType CHAR(2),
     Month_ DATE NOT NULL,
     IssuedQuantity DECIMAL,
@@ -81,7 +81,7 @@ DROP TABLE IF EXISTS PPP.ZMB25;
 CREATE TABLE PPP.ZMB25
 (
     Plant CHAR(4) NOT NULL,
-    Warehouse CHAR(4) DEFAULT 'TRFR',
+    Warehouse CHAR(4) DEFAULT 'USTK',
     ReservationID VARCHAR(10) NOT NULL,
     ReservationItemID INTEGER NOT NULL,
     Material VARCHAR(20),
