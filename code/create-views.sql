@@ -21,7 +21,7 @@ SELECT
     b.InTransit, 
     b.InTransitValue * u.ExchangeRate as InTransitValueEuro, 
     m.MRPPriority, 
-    ISNULL(MAX(p.EntryDate), '01/01/2018') as LastIssue
+    ISNULL(MAX(p.EntryDate), '01/01/2018') as LastMovement
 FROM PPP.MB52 as b 
 LEFT JOIN (SELECT q.PlantID, q.WarehouseID, t.ExchangeRate
 FROM PPP.Locations as q 
