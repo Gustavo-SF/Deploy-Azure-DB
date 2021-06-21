@@ -71,27 +71,71 @@ GO
 CREATE VIEW [PPP].[ZMB25view]
 AS 
 SELECT 
-    CONCAT(b.Plant, b.Warehouse) as LocationID,
-    b.ReservationID, 
-    b.ReservationItemID, 
-    b.Material, 
-    b.RequiredQuantity, 
-    b.RemainingQuantity, 
-    b.PurchaseRequisition, 
-    b.MaintenanceOrder,
-    b.Deleted, 
-    b.FinalIssue, 
-    b.CreationDate, 
-    b.DeliveryDate,
-    b.RequiredDate,
-    m.MRPPriority, 
-    ISNULL(p.Unrestricted, 0) - (SUM(b.RemainingQuantity) OVER (PARTITION BY b.Plant, b.Warehouse, b.Material ORDER BY b.RemainingQuantity ASC ROWS UNBOUNDED PRECEDING)) AS ProjectedStockAfter,
-    ISNULL(p.Unrestricted, 0) AS AvailableStock
-FROM  [PPP].[ZMB25] as b
-LEFT JOIN [PPP].[MRP] as m
-ON b.Warehouse=m.Warehouse AND b.Material=m.Material
-LEFT JOIN [PPP].[MB52] as p
-ON b.Plant=p.Plant AND b.Warehouse=p.Warehouse AND b.Material=p.Material;
+    j.LocationID,
+    j.ReservationID,
+    j.ReservationItemID,
+    j.Material,
+    j.MaterialCat,
+    j.RequiredQuantity,
+    j.RemainingQuantity,
+    j.ActualRemainingQuantity,
+    j.PurchaseRequisition,
+    j.MaintenanceOrder,
+    j.Deleted,
+    j.FinalIssue,
+    j.CreationDate,
+    j.DeliveryDate,
+    j.RequiredDate,
+    j.MRPPriority,
+    j.ProjectedStockAfter,
+    j.AvailableStock,
+    ISNULL(h.SumofUnrestricted, 0) AS AvailableSimilarStock,
+    ISNULL(h.SumofUnrestricted, 0) - (SUM(j.ActualRemainingQuantity) OVER (PARTITION BY j.Plant, j.Warehouse, j.MaterialCat ORDER BY j.ActualRemainingQuantity ASC ROWS UNBOUNDED PRECEDING)) AS ProjectedSimilarStockAfter
+FROM (
+    SELECT 
+        CONCAT(b.Plant, b.Warehouse) as LocationID,
+        b.Plant,
+        b.Warehouse,
+        b.ReservationID, 
+        b.ReservationItemID, 
+        b.Material, 
+        ISNULL(t.PIC, b.Material) AS MaterialCat,
+        b.RequiredQuantity, 
+        b.RemainingQuantity, 
+        CASE
+            WHEN b.Deleted = 1 OR b.FinalIssue = 1 OR b.RemainingQuantity<=0
+            THEN 0
+            ELSE b.RemainingQuantity
+        END AS ActualRemainingQuantity,
+        b.PurchaseRequisition, 
+        b.MaintenanceOrder,
+        b.Deleted, 
+        b.FinalIssue, 
+        b.CreationDate, 
+        b.DeliveryDate,
+        b.RequiredDate,
+        m.MRPPriority, 
+        ISNULL(p.Unrestricted, 0) - (SUM(b.RemainingQuantity) OVER (PARTITION BY b.Plant, b.Warehouse, b.Material ORDER BY b.RemainingQuantity ASC ROWS UNBOUNDED PRECEDING)) AS ProjectedStockAfter,
+        ISNULL(p.Unrestricted, 0) AS AvailableStock
+    FROM  [PPP].[ZMB25] as b
+    LEFT JOIN [PPP].[MRP] as m
+    ON b.Warehouse=m.Warehouse AND b.Material=m.Material
+    LEFT JOIN [PPP].[MB52] as p
+    ON b.Plant=p.Plant AND b.Warehouse=p.Warehouse AND b.Material=p.Material
+    LEFT JOIN [PPP].[MaterialClasses] as t
+    ON b.Material=t.Material
+) AS j
+LEFT JOIN (
+    SELECT t.MaterialCat, t.Warehouse, t.Plant, SUM(t.Unrestricted) AS SumofUnrestricted
+    FROM (
+        SELECT ISNULL(s.PIC, k.Material) AS MaterialCat , k.Warehouse, k.Plant, k.Unrestricted
+        FROM [PPP].[MB52] as k
+        LEFT JOIN [PPP].[MaterialClasses] as s
+        ON s.Material=k.Material
+        ) AS t
+    GROUP BY t.MaterialCat, t.Warehouse, t.Plant
+) as h
+ON h.MaterialCat=j.MaterialCat AND h.Warehouse=j.Warehouse AND h.Plant=j.Plant;
 GO
 
 /*
