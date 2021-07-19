@@ -9,12 +9,9 @@ CREATE TABLE PPP.MB52
     Warehouse    CHAR(4) DEFAULT 'USTK',
     Material    VARCHAR(20) NOT NULL,
     Unrestricted    DECIMAL,
-    UnrestrictedValue   DECIMAL,
     Blocked     DECIMAL,
-    BlockedValue DECIMAL,
     InTransfer    DECIMAL,
     InTransit DECIMAL,
-    InTransitValue DECIMAL,
     PRIMARY KEY (Plant, Warehouse, Material)
 );
 
@@ -111,4 +108,19 @@ CREATE TABLE PPP.ZMM001
     MaterialType CHAR(4) NOT NULL,
     Created DATE NOT NULL,
     LastChange Date NOT NULL
+);
+
+
+-- materials
+DROP TABLE IF EXISTS PPP.SP99;
+CREATE TABLE PPP.SP99
+(
+    Material VARCHAR(20),
+    Quantity FLOAT,
+    Unit VARCHAR(20),
+    TotalEuroValue DECIMAL,
+    Currency CHAR(3),
+    Plant CHAR(4),
+    Date_ VARCHAR(10),
+    PRIMARY KEY (Plant, Material, Date_)
 );

@@ -85,12 +85,11 @@ SELECT
     j.FinalIssue,
     j.CreationDate,
     j.DeliveryDate,
-    j.RequiredDate,
     j.MRPPriority,
     j.ProjectedStockAfter,
     j.AvailableStock,
     ISNULL(h.SumofUnrestricted, 0) AS AvailableSimilarStock,
-    ISNULL(h.SumofUnrestricted, 0) - (SUM(j.ActualRemainingQuantity) OVER (PARTITION BY j.Plant, j.Warehouse, j.MaterialCat ORDER BY j.ActualRemainingQuantity ASC ROWS UNBOUNDED PRECEDING)) AS ProjectedSimilarStockAfter
+    ISNULL(h.SumofUnrestricted, 0) - (SUM(j.ActualRemainingQuantity) OVER (PARTITION BY j.Plant, j.Warehouse, j.MaterialCat ORDER BY j.DeliveryDate ASC ROWS UNBOUNDED PRECEDING)) AS ProjectedSimilarStockAfter
 FROM (
     SELECT 
         CONCAT(b.Plant, b.Warehouse) as LocationID,
@@ -112,8 +111,7 @@ FROM (
         b.Deleted, 
         b.FinalIssue, 
         b.CreationDate, 
-        b.DeliveryDate,
-        b.RequiredDate,
+        ISNULL(b.DeliveryDate, b.RequiredDate) AS DeliveryDate,
         m.MRPPriority, 
         ISNULL(p.Unrestricted, 0) - (SUM(b.RemainingQuantity) OVER (PARTITION BY b.Plant, b.Warehouse, b.Material ORDER BY b.RemainingQuantity ASC ROWS UNBOUNDED PRECEDING)) AS ProjectedStockAfter,
         ISNULL(p.Unrestricted, 0) AS AvailableStock
