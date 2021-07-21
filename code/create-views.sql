@@ -2,7 +2,6 @@
 View for MB52 in Power BI
 
 - Concatenates Plant with Warehouse code in LocationID
-- Joins ZFI and multiplies the respective exchange rate by the local values to get Euro values
 - Joins MRP to identity MRP materials
 - Joins MB51 to identify the last movement (with group by) of the material in stock.
 */
@@ -14,20 +13,12 @@ SELECT
     CONCAT(b.Plant, b.Warehouse) as LocationID,
     b.Material, 
     b.Unrestricted, 
-    b.UnrestrictedValue * u.ExchangeRate as UnrestrictedValueEuro, 
     b.Blocked, 
-    b.BlockedValue * u.ExchangeRate as BlockedValueEuro, 
     b.InTransfer, 
     b.InTransit, 
-    b.InTransitValue * u.ExchangeRate as InTransitValueEuro, 
     m.MRPPriority, 
     ISNULL(MAX(p.EntryDate), '01/01/2018') as LastMovement
 FROM PPP.MB52 as b 
-LEFT JOIN (SELECT q.PlantID, q.WarehouseID, t.ExchangeRate
-FROM PPP.Locations as q 
-INNER JOIN PPP.ZFI as t 
-ON q.Currency=t.FromCurrency) as u 
-ON b.Plant=u.PlantID AND b.Warehouse=u.WarehouseID
 LEFT JOIN PPP.MRP as m
 ON b.Warehouse=m.Warehouse AND b.Material=m.Material
 LEFT JOIN (
@@ -48,13 +39,9 @@ GROUP BY
     b.Warehouse, 
     b.Material, 
     b.Unrestricted, 
-    b.UnrestrictedValue, 
     b.Blocked, 
-    b.BlockedValue, 
     b.InTransfer, 
     b.InTransit, 
-    b.InTransitValue, 
-    u.ExchangeRate, 
     m.MRPPriority;
 GO
 
@@ -199,22 +186,25 @@ GO
 CREATE VIEW [PPP].[MCBAview]
 AS
 SELECT
-    CONCAT(b.Plant, b.Warehouse) AS LocationID,
-    b.Material,
-    b.MRPType,
-    b.Month_,
-    b.StockQuantity,
-    b.StockValue * u.ExchangeRate AS StockValueEuro,
-    b.IssuedQuantity,
-    b.IssuedValue * u.ExchangeRate AS IssuedValueEuro
-FROM [PPP].[MCBA] as b
+    CONCAT(mc.Plant, mc.Warehouse) AS LocationID,
+    mc.Material,
+    mc.MRPType,
+    mc.StockMonth,
+    mc.StockQuantity,
+    mc.StockValue * ex.ExchangeRate AS StockValueEuro,
+    mc.IssuedQuantity,
+    mc.IssuedValue * ex.ExchangeRate AS IssuedValueEuro,
+    mc.StockQuantity * (sp.TotalEuroValue / sp.Quantity) AS StockRealEuroValue
+FROM [PPP].[MCBA] as mc
 LEFT JOIN (
     SELECT q.PlantID, q.WarehouseID, t.ExchangeRate
     FROM [PPP].[Locations] as q
     INNER JOIN [PPP].[ZFI] as t 
     ON q.Currency=t.FromCurrency
-) as u 
-ON b.Plant=u.PlantID AND b.Warehouse=u.WarehouseID;
+) as ex
+ON mc.Plant=ex.PlantID AND mc.Warehouse=ex.WarehouseID
+LEFT JOIN PPP.SP99 AS sp 
+ON sp.Material=mc.Material AND sp.Plant=mc.Plant AND sp.StockMonth=mc.StockMonth;
 GO
 
 /*

@@ -39,14 +39,14 @@ CREATE TABLE PPP.MCBA
     Material VARCHAR(20) NOT NULL,
     Warehouse CHAR(4) DEFAULT 'USTK',
     MRPType CHAR(2),
-    Month_ DATE NOT NULL,
+    StockMonth CHAR(7),
     IssuedQuantity DECIMAL,
     ReceivedQuantity DECIMAL,
     StockQuantity DECIMAL,
     StockValue DECIMAL,
     ReceivedValue DECIMAL,
     IssuedValue DECIMAL,
-    PRIMARY KEY (Plant, Material, Warehouse, Month_)
+    PRIMARY KEY (Plant, Material, Warehouse, StockMonth)
 );
 
 -- Material Requirements Planning
@@ -121,6 +121,6 @@ CREATE TABLE PPP.SP99
     TotalEuroValue DECIMAL,
     Currency CHAR(3),
     Plant CHAR(4),
-    Date_ VARCHAR(10),
-    PRIMARY KEY (Plant, Material, Date_)
+    StockMonth CHAR(7),
+    PRIMARY KEY (Plant, Material, StockMonth)
 );
