@@ -55,10 +55,9 @@ sqlcmd \
     -Q "${tempfile}"
 
 # add new data to MB51 and MCBA
-is=("MB51" "MCBA")
-for ((i = 0; i < 2; i++)) 
+for TRANSACTION in "MB51" "MCBA"
 	do 
-        tempfile=$(sed "s/SOURCEFILE/${is[i]}/; s/TABLETOPOPULATE/${is[i]}/;" code/populate-template.sql)
+        tempfile=$(sed "s/SOURCEFILE/${TRANSACTION}/; s/TABLETOPOPULATE/${TRANSACTION}/;" code/populate-template.sql)
         sqlcmd \
             -S tcp:$server.database.windows.net \
             -d $database \

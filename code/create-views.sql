@@ -45,6 +45,62 @@ GROUP BY
     m.MRPPriority;
 GO
 
+DROP VIEW IF EXISTS PPP.MCBAcurview;
+GO
+CREATE VIEW PPP.MCBAcurview
+AS 
+SELECT 
+    CONCAT(mcba.Plant, mcba.Warehouse) as LocationID, 
+    mcba.Material,
+	mcba.StockQuantity,
+    mcba.StockValue * exc.ExchangeRate AS StockValueEuro,
+	mcba.StockMonth,
+    mrp.MRPPriority,
+	mcba.StockQuantity * (sp.TotalEuroValue / sp.Quantity) AS StockRealEuroValue,
+	ISNULL(MAX(mb51.EntryDate), '01/01/2018') as LastMovement
+FROM (SELECT * FROM PPP.MCBA WHERE StockMonth = (SELECT MAX(StockMonth) FROM PPP.MCBA) AND StockQuantity > 0) as mcba
+
+	LEFT JOIN PPP.MRP as mrp
+	ON mcba.Warehouse=mrp.Warehouse AND mcba.Material=mrp.Material
+
+	LEFT JOIN (
+		SELECT Warehouse, Material, EntryDate
+		FROM PPP.MB51
+		WHERE 
+			MovementType<>'561' AND 
+			MovementType<>'562' AND 
+			MovementType<>'565' AND 
+			MovementType<>'951' AND 
+			MovementType<>'952' AND 
+			MovementType<>'998' AND 
+			MovementType<>'999'
+	) as mb51
+	ON mcba.Material=mb51.Material AND mcba.Warehouse=mb51.Warehouse
+
+	LEFT JOIN PPP.SP99 AS sp 
+    ON sp.Material=mcba.Material AND sp.Plant=mcba.Plant AND sp.StockMonth=mcba.StockMonth
+
+    LEFT JOIN (
+        SELECT loc.PlantID, loc.WarehouseID, zfi.ExchangeRate
+        FROM [PPP].[Locations] as loc
+        INNER JOIN [PPP].[ZFI] as zfi
+        ON loc.Currency=zfi.FromCurrency
+    ) as exc
+    ON mcba.Plant=exc.PlantID AND mcba.Warehouse=exc.WarehouseID
+
+GROUP BY 
+    mcba.Plant, 
+    mcba.Warehouse, 
+    mcba.Material, 
+	mcba.StockQuantity,
+	mcba.StockMonth,
+    mcba.StockValue,
+    exc.ExchangeRate,
+	sp.TotalEuroValue,
+	sp.Quantity,
+    mrp.MRPPriority;
+GO
+
 /*
 View for ZMB25 in Power BI
 
@@ -189,6 +245,7 @@ SELECT
     CONCAT(mc.Plant, mc.Warehouse) AS LocationID,
     mc.Material,
     mc.MRPType,
+    mrp.MRPPriority,
     mc.StockMonth,
     mc.StockQuantity,
     mc.StockValue * ex.ExchangeRate AS StockValueEuro,
@@ -196,15 +253,21 @@ SELECT
     mc.IssuedValue * ex.ExchangeRate AS IssuedValueEuro,
     mc.StockQuantity * (sp.TotalEuroValue / sp.Quantity) AS StockRealEuroValue
 FROM [PPP].[MCBA] as mc
-LEFT JOIN (
-    SELECT q.PlantID, q.WarehouseID, t.ExchangeRate
-    FROM [PPP].[Locations] as q
-    INNER JOIN [PPP].[ZFI] as t 
-    ON q.Currency=t.FromCurrency
-) as ex
-ON mc.Plant=ex.PlantID AND mc.Warehouse=ex.WarehouseID
-LEFT JOIN PPP.SP99 AS sp 
-ON sp.Material=mc.Material AND sp.Plant=mc.Plant AND sp.StockMonth=mc.StockMonth;
+
+	LEFT JOIN PPP.MRP as mrp
+	    ON mc.Warehouse=mrp.Warehouse AND mc.Material=mrp.Material
+
+    LEFT JOIN (
+        SELECT q.PlantID, q.WarehouseID, t.ExchangeRate
+        FROM [PPP].[Locations] as q
+        INNER JOIN [PPP].[ZFI] as t 
+        ON q.Currency=t.FromCurrency
+    ) as ex
+    ON mc.Plant=ex.PlantID AND mc.Warehouse=ex.WarehouseID
+
+    LEFT JOIN PPP.SP99 AS sp 
+    ON sp.Material=mc.Material AND sp.Plant=mc.Plant AND sp.StockMonth=mc.StockMonth;
+
 GO
 
 /*

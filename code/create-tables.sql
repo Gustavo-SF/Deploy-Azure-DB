@@ -8,10 +8,10 @@ CREATE TABLE PPP.MB52
     Plant    CHAR(4) NOT NULL,
     Warehouse    CHAR(4) DEFAULT 'USTK',
     Material    VARCHAR(20) NOT NULL,
-    Unrestricted    DECIMAL,
-    Blocked     DECIMAL,
-    InTransfer    DECIMAL,
-    InTransit DECIMAL,
+    Unrestricted    FLOAT,
+    Blocked     FLOAT,
+    InTransfer    FLOAT,
+    InTransit FLOAT,
     PRIMARY KEY (Plant, Warehouse, Material)
 );
 
@@ -23,11 +23,11 @@ CREATE TABLE PPP.MB51
     Plant CHAR(4) NOT NULL,
     Warehouse CHAR(4) DEFAULT 'USTK',
     Material VARCHAR(20) NOT NULL,
-    Quantity DECIMAL,
+    Quantity FLOAT,
     MovementType CHAR(3),
     EntryDate DATE,
     RequisitionDate DATE,
-    MovementValue DECIMAL NOT NULL,
+    MovementValue FLOAT NOT NULL,
     ReservationID VARCHAR(15)
 );
 
@@ -40,12 +40,12 @@ CREATE TABLE PPP.MCBA
     Warehouse CHAR(4) DEFAULT 'USTK',
     MRPType CHAR(2),
     StockMonth CHAR(7),
-    IssuedQuantity DECIMAL,
-    ReceivedQuantity DECIMAL,
-    StockQuantity DECIMAL,
-    StockValue DECIMAL,
-    ReceivedValue DECIMAL,
-    IssuedValue DECIMAL,
+    IssuedQuantity FLOAT,
+    ReceivedQuantity FLOAT,
+    StockQuantity FLOAT,
+    StockValue FLOAT,
+    ReceivedValue FLOAT,
+    IssuedValue FLOAT,
     PRIMARY KEY (Plant, Material, Warehouse, StockMonth)
 );
 
@@ -55,8 +55,8 @@ CREATE TABLE PPP.MRP
 (
     Warehouse CHAR(4) NOT NULL,
     MRPPriority VARCHAR(6),
-    ProposedQuantity DECIMAL,
-    AveragePrice DECIMAL,
+    ProposedQuantity FLOAT,
+    AveragePrice FLOAT,
     Material VARCHAR(20) NOT NULL,
     MRPType CHAR(2)
     PRIMARY KEY (Warehouse, Material)
@@ -82,8 +82,8 @@ CREATE TABLE PPP.ZMB25
     ReservationID VARCHAR(10) NOT NULL,
     ReservationItemID INTEGER NOT NULL,
     Material VARCHAR(20),
-    RequiredQuantity DECIMAL,
-    RemainingQuantity DECIMAL,
+    RequiredQuantity FLOAT,
+    RemainingQuantity FLOAT,
     PurchaseRequisition VARCHAR(15),
     MaintenanceOrder VARCHAR(15),
     DestinationCC VARCHAR(10),
@@ -118,7 +118,7 @@ CREATE TABLE PPP.SP99
     Material VARCHAR(20),
     Quantity FLOAT,
     Unit VARCHAR(20),
-    TotalEuroValue DECIMAL,
+    TotalEuroValue FLOAT,
     Currency CHAR(3),
     Plant CHAR(4),
     StockMonth CHAR(7),
