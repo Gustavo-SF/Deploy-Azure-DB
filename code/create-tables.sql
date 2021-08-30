@@ -1,126 +1,140 @@
-IF SCHEMA_ID("PPP") IS NULL
-EXEC ("CREATE SCHEMA PPP");
+IF SCHEMA_ID("proc_db") IS NULL
+EXEC ("CREATE SCHEMA proc_db");
 
 -- stock
-DROP TABLE IF EXISTS PPP.MB52;
-CREATE TABLE PPP.MB52
+DROP TABLE IF EXISTS proc_db.mb52;
+CREATE TABLE proc_db.mb52
 (
-    Plant    CHAR(4) NOT NULL,
-    Warehouse    CHAR(4) DEFAULT 'USTK',
-    Material    VARCHAR(20) NOT NULL,
-    Unrestricted    FLOAT,
-    Blocked     FLOAT,
-    InTransfer    FLOAT,
-    InTransit FLOAT,
-    PRIMARY KEY (Plant, Warehouse, Material)
+    plant_id    CHAR(4) NOT NULL,
+    warehouse_id    CHAR(4) DEFAULT 'USTK',
+    material_id    VARCHAR(20) NOT NULL,
+    unrestricted    FLOAT,
+    blocked     FLOAT,
+    in_transfer    FLOAT,
+    in_transit FLOAT,
+    PRIMARY KEY (plant_id, warehouse_id, material_id)
 );
 
 -- stock movements
-DROP TABLE IF EXISTS PPP.MB51;
-CREATE TABLE PPP.MB51
+DROP TABLE IF EXISTS proc_db.mb51;
+CREATE TABLE proc_db.mb51
 (
-    MovementId INTEGER IDENTITY(1,1) NOT NULL PRIMARY KEY,
-    Plant CHAR(4) NOT NULL,
-    Warehouse CHAR(4) DEFAULT 'USTK',
-    Material VARCHAR(20) NOT NULL,
-    Quantity FLOAT,
-    MovementType CHAR(3),
-    EntryDate DATE,
-    RequisitionDate DATE,
-    MovementValue FLOAT NOT NULL,
-    ReservationID VARCHAR(15)
+    movement_id INTEGER IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    plant_id CHAR(4) NOT NULL,
+    warehouse_id CHAR(4) DEFAULT 'USTK',
+    material_id VARCHAR(20) NOT NULL,
+    quantity FLOAT,
+    movement_type CHAR(3),
+    entry_date DATE,
+    requisition_date DATE,
+    movement_value FLOAT NOT NULL,
+    reservation_id VARCHAR(15)
 );
 
 -- stock history
-DROP TABLE IF EXISTS PPP.MCBA;
-CREATE TABLE PPP.MCBA
+DROP TABLE IF EXISTS proc_db.mcba;
+CREATE TABLE proc_db.mcba
 (
-    Plant CHAR(4) NOT NULL,
-    Material VARCHAR(20) NOT NULL,
-    Warehouse CHAR(4) DEFAULT 'USTK',
-    MRPType CHAR(2),
-    StockMonth CHAR(7),
-    IssuedQuantity FLOAT,
-    ReceivedQuantity FLOAT,
-    StockQuantity FLOAT,
-    StockValue FLOAT,
-    ReceivedValue FLOAT,
-    IssuedValue FLOAT,
-    PRIMARY KEY (Plant, Material, Warehouse, StockMonth)
+    plant_id CHAR(4) NOT NULL,
+    material_id VARCHAR(20) NOT NULL,
+    warehouse_id CHAR(4) DEFAULT 'USTK',
+    mrp_type CHAR(2),
+    month_of_stock CHAR(7),
+    issued_quantity FLOAT,
+    received_quantity FLOAT,
+    stock_quantity FLOAT,
+    stock_value FLOAT,
+    received_value FLOAT,
+    issued_value FLOAT,
+    PRIMARY KEY (plant_id, material_id, warehouse_id, month_of_stock)
 );
 
--- Material Requirements Planning
-DROP TABLE IF EXISTS PPP.MRP;
-CREATE TABLE PPP.MRP
+-- material Requirements Planning
+DROP TABLE IF EXISTS proc_db.zmrp;
+CREATE TABLE proc_db.zmrp
 (
-    Warehouse CHAR(4) NOT NULL,
-    MRPPriority VARCHAR(6),
-    ProposedQuantity FLOAT,
-    AveragePrice FLOAT,
-    Material VARCHAR(20) NOT NULL,
-    MRPType CHAR(2)
-    PRIMARY KEY (Warehouse, Material)
+    warehouse_id CHAR(4) NOT NULL,
+    mrp_priority VARCHAR(6),
+    proposed_quantity FLOAT,
+    average_price FLOAT,
+    material_id VARCHAR(20) NOT NULL,
+    mrp_type CHAR(2)
+    PRIMARY KEY (warehouse_id, material_id)
 );
 
 -- conversion rates
-DROP TABLE IF EXISTS PPP.ZFI;
-CREATE TABLE PPP.ZFI
+DROP TABLE IF EXISTS proc_db.zfi;
+CREATE TABLE proc_db.zfi
 (
-    FromCurrency CHAR(3),
-    ToCurrency CHAR(3),
-    ValidDate DATE,
-    ExchangeRate FLOAT,
-    PRIMARY KEY (FromCurrency, ToCurrency, ValidDate)
+    from_currency CHAR(3),
+    to_currency CHAR(3),
+    valid_date DATE,
+    exchange_rate FLOAT,
+    PRIMARY KEY (from_currency, to_currency, valid_date)
 );
 
 -- reservations
-DROP TABLE IF EXISTS PPP.ZMB25;
-CREATE TABLE PPP.ZMB25
+DROP TABLE IF EXISTS proc_db.zmb25;
+CREATE TABLE proc_db.zmb25
 (
-    Plant CHAR(4) NOT NULL,
-    Warehouse CHAR(4) DEFAULT 'USTK',
-    ReservationID VARCHAR(10) NOT NULL,
-    ReservationItemID INTEGER NOT NULL,
-    Material VARCHAR(20),
-    RequiredQuantity FLOAT,
-    RemainingQuantity FLOAT,
-    PurchaseRequisition VARCHAR(15),
-    MaintenanceOrder VARCHAR(15),
-    DestinationCC VARCHAR(10),
-    MovementType CHAR(3),
-    Deleted BIT,
-    FinalIssue BIT,
-    RequiredDate DATE,
-    DeliveryDate DATE,
-    CreationDate DATE,
-    PRIMARY KEY (ReservationID, ReservationItemID)
+    plant_id CHAR(4) NOT NULL,
+    warehouse_id CHAR(4) DEFAULT 'USTK',
+    reservation_id VARCHAR(10) NOT NULL,
+    reservation_item_id INTEGER NOT NULL,
+    material_id VARCHAR(20),
+    required_quantity FLOAT,
+    remaining_quantity FLOAT,
+    purchase_requisition VARCHAR(15),
+    maintenance_order VARCHAR(15),
+    destination_cost_centre VARCHAR(10),
+    movement_type CHAR(3),
+    is_deleted BIT,
+    is_final_issue BIT,
+    required_date DATE,
+    delivery_date DATE,
+    creation_date DATE,
+    PRIMARY KEY (reservation_id, reservation_item_id)
 );
 
 -- materials
-DROP TABLE IF EXISTS PPP.ZMM001;
-CREATE TABLE PPP.ZMM001
+DROP TABLE IF EXISTS proc_db.zmm001;
+CREATE TABLE proc_db.zmm001
 (
-    Material VARCHAR(20) PRIMARY KEY NOT NULL,
-    MaterialDescription TEXT,
-    MaterialGroup VARCHAR(15) NOT NULL,
-    MaterialGroupDescription TEXT,
-    Unit VARCHAR(10),
-    MaterialType CHAR(4) NOT NULL,
-    Created DATE NOT NULL,
-    LastChange Date NOT NULL
+    material_id VARCHAR(20) PRIMARY KEY NOT NULL,
+    material_description TEXT,
+    material_group VARCHAR(15) NOT NULL,
+    material_group_description TEXT,
+    unit VARCHAR(10),
+    material_type CHAR(4) NOT NULL,
+    created_date DATE NOT NULL,
+    last_change_date Date NOT NULL
 );
 
 
--- materials
-DROP TABLE IF EXISTS PPP.SP99;
-CREATE TABLE PPP.SP99
+-- stock values
+DROP TABLE IF EXISTS proc_db.sp99;
+CREATE TABLE proc_db.sp99
 (
-    Material VARCHAR(20),
-    Quantity FLOAT,
-    Unit VARCHAR(20),
-    TotalEuroValue FLOAT,
-    Currency CHAR(3),
-    Plant CHAR(4),
-    StockMonth CHAR(7),
-    PRIMARY KEY (Plant, Material, StockMonth)
+    material_id VARCHAR(20),
+    quantity FLOAT,
+    unit VARCHAR(20),
+    total_euro_value FLOAT,
+    currency CHAR(3),
+    plant_id CHAR(4),
+    month_of_stock CHAR(7),
+    PRIMARY KEY (plant_id, material_id, month_of_stock)
+);
+
+DROP TABLE IF EXISTS proc_db.picps;
+CREATE TABLE proc_db.picps
+(
+    pic_number    VARCHAR(40) NOT NULL,
+    material_id    VARCHAR(20) NOT NULL PRIMARY KEY
+);
+
+DROP TABLE IF EXISTS proc_db.monos_categories;
+CREATE TABLE proc_db.monos_categories
+(
+    material_id    VARCHAR(20) NOT NULL PRIMARY KEY,
+    monos_category    VARCHAR(100) NOT NULL
 );

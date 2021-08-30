@@ -3,6 +3,3 @@ code/create-extra-tables.sql
 
 # ZMM001 missing materials output
 missing.txt
-
-# secrets
-secrets/database_pws.sh
