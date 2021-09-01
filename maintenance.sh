@@ -33,7 +33,7 @@ sqlcmd \
     -Q "${config_code}"
 
 # add new data to MB51, MCBA, SP99 and ZMM001
-for transaction in "mb51" "mcba" "sp99" "zmm001"
+for transaction in "mb51" "mcba" "sp99"
 	do 
         populate_code=$(sed "s/SOURCE_FILE/${transaction}/; s/TABLE_TO_POPULATE/${transaction}/;" code/populate-template.sql)
         sqlcmd \
@@ -42,6 +42,7 @@ for transaction in "mb51" "mcba" "sp99" "zmm001"
             -U $LOGIN_INPUT \
             -P $PASSWORD_INPUT \
             -Q "${populate_code}"
+        echo "[PPP] Uploaded $transaction into Azure Database."
 done
 
 # recreate tables MB51, MRP, ZFI and ZMB25
@@ -54,6 +55,42 @@ for transaction in "mb52" "zmrp" "zfi" "zmb25"
             -U $LOGIN_INPUT \
             -P $PASSWORD_INPUT \
             -Q "${initial_populate_code}"
+        echo "[PPP] Uploaded $transaction into Azure Database."
 done
 
 echo "[PPP] Data has been added to existing tables"
+
+# get the missing materials inside a TXT file
+sqlcmd \
+    -S tcp:$SERVER_NAME.database.windows.net \
+    -d $DATABASE \
+    -U $LOGIN_INPUT \
+    -P $PASSWORD_INPUT \
+    -Q "SELECT * FROM proc_db.missing_materials" \
+    -o missing.txt
+
+# filter all the needed lines from missing TXT file (ZMAT and ZPEC materials)
+awk '/^(F|4|6)/ {print $0}' missing.txt > missing.temp
+mv -f missing.temp missing.txt
+
+echo "[PPP] zmm001 missing material codes are now in the missing text file"
+
+echo "[PPP] Press any key to continue (after zmm001 is uploaded to maintenance storage folder)"
+while [ true ] ; do
+    read -t 3 -n 1
+    if [ $? = 0 ] ; then
+        exit ;
+    else
+        echo "waiting for the keypress"
+    fi
+done
+
+populate_code=$(sed "s/SOURCE_FILE/zmm001/; s/TABLE_TO_POPULATE/zmm001/;" code/populate-template.sql)
+sqlcmd \
+    -S tcp:$SERVER_NAME.database.windows.net \
+    -d $DATABASE \
+    -U $LOGIN_INPUT \
+    -P $PASSWORD_INPUT \
+    -Q "${populate_code}"
+    
+echo "[PPP] Uploaded zmm001 into Azure Database."
