@@ -72,25 +72,5 @@ sqlcmd \
 # filter all the needed lines from missing TXT file (ZMAT and ZPEC materials)
 awk '/^(F|4|6)/ {print $0}' missing.txt > missing.temp
 mv -f missing.temp missing.txt
-
-echo "[PPP] zmm001 missing material codes are now in the missing text file"
-
-echo "[PPP] Press any key to continue (after zmm001 is uploaded to maintenance storage folder)"
-while [ true ] ; do
-    read -t 3 -n 1
-    if [ $? = 0 ] ; then
-        exit ;
-    else
-        echo "waiting for the keypress"
-    fi
-done
-
-populate_code=$(sed "s/SOURCE_FILE/zmm001/; s/TABLE_TO_POPULATE/zmm001/;" code/populate-template.sql)
-sqlcmd \
-    -S tcp:$SERVER_NAME.database.windows.net \
-    -d $DATABASE \
-    -U $LOGIN_INPUT \
-    -P $PASSWORD_INPUT \
-    -Q "${populate_code}"
     
-echo "[PPP] Uploaded zmm001 into Azure Database."
+echo "[PPP] Missing materials have been downloaded."
