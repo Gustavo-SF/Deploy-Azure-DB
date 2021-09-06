@@ -3,7 +3,7 @@
 # Getting server name
 echo "[PPP] Starting the database initial deployment for the Procurement Pipeline Project"
 
-SERVER_NAME=$(az sql server list --query [0].name -o tsv)
+export SERVER_NAME=$(az sql server list --query [0].name -o tsv)
 
 # get ip and open firewall to it
 THIS_IP=$(wget -O - -q https://icanhazip.com/)
