@@ -12,7 +12,8 @@ CREATE TABLE proc_db.mb52
     blocked     FLOAT,
     in_transfer    FLOAT,
     in_transit FLOAT,
-    PRIMARY KEY (plant_id, warehouse_id, material_id)
+    PRIMARY KEY (plant_id, warehouse_id, material_id),
+    FOREIGN KEY (plant_id, warehouse_id) REFERENCES proc_db.locations(plant_id, warehouse_id)
 );
 
 -- stock movements
@@ -28,7 +29,9 @@ CREATE TABLE proc_db.mb51
     entry_date DATE,
     requisition_date DATE,
     movement_value FLOAT NOT NULL,
-    reservation_id VARCHAR(15)
+    reservation_id VARCHAR(15),
+    FOREIGN KEY (plant_id, warehouse_id) REFERENCES proc_db.locations(plant_id, warehouse_id),
+    FOREIGN KEY (movement_type) REFERENCES proc_db.movement_types(movement_type)
 );
 
 -- stock history
@@ -46,7 +49,8 @@ CREATE TABLE proc_db.mcba
     stock_value FLOAT,
     received_value FLOAT,
     issued_value FLOAT,
-    PRIMARY KEY (plant_id, material_id, warehouse_id, month_of_stock)
+    PRIMARY KEY (plant_id, material_id, warehouse_id, month_of_stock),
+    FOREIGN KEY (plant_id, warehouse_id) REFERENCES proc_db.locations(plant_id, warehouse_id);
 );
 
 -- material Requirements Planning
@@ -62,7 +66,7 @@ CREATE TABLE proc_db.zmrp
     PRIMARY KEY (warehouse_id, material_id)
 );
 
--- conversion rates
+-- conversion rates to EUR on the latest date
 DROP TABLE IF EXISTS proc_db.zfi;
 CREATE TABLE proc_db.zfi
 (
@@ -70,7 +74,7 @@ CREATE TABLE proc_db.zfi
     to_currency CHAR(3),
     valid_date DATE,
     exchange_rate FLOAT,
-    PRIMARY KEY (from_currency, to_currency, valid_date)
+    PRIMARY KEY (from_currency)
 );
 
 -- reservations
@@ -93,7 +97,8 @@ CREATE TABLE proc_db.zmb25
     required_date DATE,
     delivery_date DATE,
     creation_date DATE,
-    PRIMARY KEY (reservation_id, reservation_item_id)
+    PRIMARY KEY (reservation_id, reservation_item_id),
+    FOREIGN KEY (plant_id, warehouse_id) REFERENCES proc_db.locations(plant_id, warehouse_id)
 );
 
 -- materials

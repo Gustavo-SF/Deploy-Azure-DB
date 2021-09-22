@@ -10,18 +10,18 @@ GO
 CREATE VIEW proc_db.mb52_view
 AS 
 SELECT 
-    CONCAT(zmb25.plant_id, zmb25.warehouse_id) as location_id,
-    zmb25.material_id, 
-    zmb25.unrestricted, 
-    zmb25.blocked, 
-    zmb25.in_transfer, 
-    zmb25.in_transit, 
+    CONCAT(mb52.plant_id, mb52.warehouse_id) as location_id,
+    mb52.material_id, 
+    mb52.unrestricted, 
+    mb52.blocked, 
+    mb52.in_transfer, 
+    mb52.in_transit, 
     zmrp.mrp_priority, 
     ISNULL(MAX(real_movements.entry_date), '01/01/2018') as last_movement
-FROM proc_db.MB52 as zmb25 
+FROM proc_db.MB52 as mb52 
 
 LEFT JOIN proc_db.zmrp as zmrp
-ON zmb25.warehouse_id=zmrp.warehouse_id AND zmb25.material_id=zmrp.material_id
+ON mb52.warehouse_id=zmrp.warehouse_id AND mb52.material_id=zmrp.material_id
 
 LEFT JOIN (
     SELECT warehouse_id, material_id, entry_date
@@ -35,16 +35,16 @@ LEFT JOIN (
         movement_type<>'998' AND 
         movement_type<>'999'
 ) as real_movements
-ON zmb25.material_id=real_movements.material_id AND zmb25.warehouse_id=real_movements.warehouse_id
+ON mb52.material_id=real_movements.material_id AND mb52.warehouse_id=real_movements.warehouse_id
 
 GROUP BY 
-    zmb25.plant_id, 
-    zmb25.warehouse_id, 
-    zmb25.material_id, 
-    zmb25.unrestricted, 
-    zmb25.blocked, 
-    zmb25.in_transfer, 
-    zmb25.in_transit, 
+    mb52.plant_id, 
+    mb52.warehouse_id, 
+    mb52.material_id, 
+    mb52.unrestricted, 
+    mb52.blocked, 
+    mb52.in_transfer, 
+    mb52.in_transit, 
     zmrp.mrp_priority;
 GO
 
