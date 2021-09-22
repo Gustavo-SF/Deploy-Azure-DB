@@ -59,18 +59,6 @@ az sql server ad-admin create \
 echo "[PPP] Added Admin user to Server"
 
 
-# create extra tables
-sqlcmd \
-    -S tcp:$SERVER_NAME.database.windows.net \
-    -d $DATABASE \
-    -U $LOGIN_INPUT \
-    -P $PASSWORD_INPUT \
-    -i code/create-extra-tables.sql \
-    -o /dev/null
-
-echo "[PPP] Created extra tables with INSERT"
-
-
 # create views
 sqlcmd \
     -S tcp:$SERVER_NAME.database.windows.net \
@@ -102,9 +90,29 @@ sleep 5s
 
 echo "[PPP] Configuration file is set up. Now proceeding with uploading data."
 
+transaction="zfi"
+populate_code=$(sed "s/SOURCE_FILE/${transaction}/; s/TABLE_TO_POPULATE/${transaction}/;" code/populate-template.sql)
+sqlcmd \
+    -S tcp:$SERVER_NAME.database.windows.net \
+    -d $DATABASE \
+    -U $LOGIN_INPUT \
+    -P $PASSWORD_INPUT \
+    -Q "${populate_code}"
+echo "[PPP] Uploaded data for ${transaction}"
+
+# create extra tables
+sqlcmd \
+    -S tcp:$SERVER_NAME.database.windows.net \
+    -d $DATABASE \
+    -U $LOGIN_INPUT \
+    -P $PASSWORD_INPUT \
+    -i code/create-extra-tables.sql \
+    -o /dev/null
+
+echo "[PPP] Created extra tables with INSERT"
+
 # BULK INSERT all of the data
-# TODO: NEED TO CHECK FROM HERE
-for transaction in "mb52" "mb51" "mcba" "zmrp" "zfi" "zmb25" "zmm001" "sp99" "picps" "monos_categories"
+for transaction in "mb52" "mb51" "mcba" "zmrp" "zmb25" "zmm001" "sp99" "picps" "monos_categories"
 	do 
         populate_code=$(sed "s/SOURCE_FILE/${transaction}/; s/TABLE_TO_POPULATE/${transaction}/;" code/populate-template.sql)
         sqlcmd \

@@ -45,6 +45,14 @@ for transaction in "mb51" "mcba" "sp99"
         echo "[PPP] Uploaded $transaction into Azure Database."
 done
 
+# Need to delete constraint before truncating zfi table
+sqlcmd \
+    -S tcp:$SERVER_NAME.database.windows.net \
+    -d $DATABASE \
+    -U $LOGIN_INPUT \
+    -P $PASSWORD_INPUT \
+    -Q "ALTER TABLE proc_db.locations DROP CONSTRAINT fk_locations_zfi;"
+
 # recreate tables MB51, MRP, ZFI and ZMB25
 for transaction in "mb52" "zmrp" "zfi" "zmb25"
 	do 
@@ -57,6 +65,14 @@ for transaction in "mb52" "zmrp" "zfi" "zmb25"
             -Q "${initial_populate_code}"
         echo "[PPP] Uploaded $transaction into Azure Database."
 done
+
+# Add constraint again
+sqlcmd \
+    -S tcp:$SERVER_NAME.database.windows.net \
+    -d $DATABASE \
+    -U $LOGIN_INPUT \
+    -P $PASSWORD_INPUT \
+    -Q "ALTER TABLE proc_db.locations ADD CONSTRAINT fk_locations_zfi FOREIGN KEY (currency) REFERENCES proc_db.zfi(from_currency)"
 
 echo "[PPP] Data has been added to existing tables"
 
