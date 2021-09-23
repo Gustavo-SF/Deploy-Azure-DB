@@ -139,5 +139,15 @@ sqlcmd \
 awk '/^(F|4|6)/ {print $0}' missing.txt > missing.temp
 mv -f missing.temp missing.txt
 
+# In the end we can add the foreign key constraints. This will also add any missing rows to
+# the parent tables. The way these rows are added to the parent tables can be adjusted
+# in the T-SQL code.
+sqlcmd \
+    -S tcp:$SERVER_NAME.database.windows.net \
+    -d $DATABASE \
+    -U $LOGIN_INPUT \
+    -P $PASSWORD_INPUT \
+    -i code/format_schema.sql
+
 echo "[PPP] Database deployment done"
 

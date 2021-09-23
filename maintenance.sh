@@ -32,6 +32,14 @@ sqlcmd \
     -P $PASSWORD_INPUT \
     -Q "${config_code}"
 
+# Need to delete constraint before doing a maintenance of the database
+sqlcmd \
+    -S tcp:$SERVER_NAME.database.windows.net \
+    -d $DATABASE \
+    -U $LOGIN_INPUT \
+    -P $PASSWORD_INPUT \
+    -i code/remove_fks.sql
+
 # add new data to MB51, MCBA, SP99 and ZMM001
 for transaction in "mb51" "mcba" "sp99"
 	do 
@@ -45,14 +53,6 @@ for transaction in "mb51" "mcba" "sp99"
         echo "[PPP] Uploaded $transaction into Azure Database."
 done
 
-# Need to delete constraint before truncating zfi table
-sqlcmd \
-    -S tcp:$SERVER_NAME.database.windows.net \
-    -d $DATABASE \
-    -U $LOGIN_INPUT \
-    -P $PASSWORD_INPUT \
-    -Q "ALTER TABLE proc_db.locations DROP CONSTRAINT fk_locations_zfi;"
-
 # recreate tables MB51, MRP, ZFI and ZMB25
 for transaction in "mb52" "zmrp" "zfi" "zmb25"
 	do 
@@ -65,14 +65,6 @@ for transaction in "mb52" "zmrp" "zfi" "zmb25"
             -Q "${initial_populate_code}"
         echo "[PPP] Uploaded $transaction into Azure Database."
 done
-
-# Add constraint again
-sqlcmd \
-    -S tcp:$SERVER_NAME.database.windows.net \
-    -d $DATABASE \
-    -U $LOGIN_INPUT \
-    -P $PASSWORD_INPUT \
-    -Q "ALTER TABLE proc_db.locations ADD CONSTRAINT fk_locations_zfi FOREIGN KEY (currency) REFERENCES proc_db.zfi(from_currency)"
 
 echo "[PPP] Data has been added to existing tables"
 
@@ -88,5 +80,15 @@ sqlcmd \
 # filter all the needed lines from missing TXT file (ZMAT and ZPEC materials)
 awk '/^(F|4|6)/ {print $0}' missing.txt > missing.temp
 mv -f missing.temp missing.txt
+
+# In the end we can add the foreign key constraints. This will also add any missing rows to
+# the parent tables. The way these rows are added to the parent tables can be adjusted
+# in the T-SQL code.
+sqlcmd \
+    -S tcp:$SERVER_NAME.database.windows.net \
+    -d $DATABASE \
+    -U $LOGIN_INPUT \
+    -P $PASSWORD_INPUT \
+    -i code/format_schema.sql
     
 echo "[PPP] Missing materials have been downloaded."

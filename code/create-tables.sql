@@ -26,7 +26,6 @@ CREATE TABLE proc_db.locations
     currency CHAR(3),
     project VARCHAR(15)
     PRIMARY KEY (plant_id, warehouse_id),
-    CONSTRAINT fk_locations_zfi FOREIGN KEY (currency) REFERENCES proc_db.zfi(from_currency)
 );
 
 DROP TABLE IF EXISTS proc_db.movement_types;
@@ -91,7 +90,6 @@ CREATE TABLE proc_db.mb52
     in_transfer    FLOAT,
     in_transit FLOAT,
     PRIMARY KEY (plant_id, warehouse_id, material_id),
-    FOREIGN KEY (plant_id, warehouse_id) REFERENCES proc_db.locations(plant_id, warehouse_id)
 );
 
 -- stock movements
@@ -108,8 +106,6 @@ CREATE TABLE proc_db.mb51
     requisition_date DATE,
     movement_value FLOAT NOT NULL,
     reservation_id VARCHAR(15),
-    FOREIGN KEY (plant_id, warehouse_id) REFERENCES proc_db.locations(plant_id, warehouse_id),
-    FOREIGN KEY (movement_type) REFERENCES proc_db.movement_types(movement_type)
 );
 
 -- stock history
@@ -128,7 +124,6 @@ CREATE TABLE proc_db.mcba
     received_value FLOAT,
     issued_value FLOAT,
     PRIMARY KEY (plant_id, material_id, warehouse_id, month_of_stock),
-    FOREIGN KEY (plant_id, warehouse_id) REFERENCES proc_db.locations(plant_id, warehouse_id);
 );
 
 -- material Requirements Planning
@@ -165,5 +160,4 @@ CREATE TABLE proc_db.zmb25
     delivery_date DATE,
     creation_date DATE,
     PRIMARY KEY (reservation_id, reservation_item_id),
-    FOREIGN KEY (plant_id, warehouse_id) REFERENCES proc_db.locations(plant_id, warehouse_id)
 );
